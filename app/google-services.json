@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "345103398433",
+    "project_id": "pockeitt",
+    "storage_bucket": "pockeitt.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:345103398433:android:ff92554367e66d0139d560",
+        "android_client_info": {
+          "package_name": "com.example.pockeitt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9e_o5WzB7kkA8_WtlbTaStMOFIh-Lp3Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
