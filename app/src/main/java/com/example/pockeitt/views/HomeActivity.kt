@@ -252,6 +252,7 @@ class HomeActivity : AppCompatActivity() {
 
     private fun setupButtons() {
         btnMonthly!!.setOnClickListener { v: View? ->
+
             if (btnMonthly!!.isEnabled) {
                 btnMonthly!!.isEnabled = false
                 btnWeekly!!.isEnabled = true
@@ -342,6 +343,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun showBottomSheetDialog() {
+
         if (!bottomSheetShown) {
             val bottomSheetDialog = BottomSheetDialog(this)
             bottomSheetDialog.setContentView(R.layout.bottomsheet)
@@ -350,6 +352,7 @@ class HomeActivity : AppCompatActivity() {
             bottomSheetDialog.setOnDismissListener { dialog: DialogInterface? ->
                 bottomSheetShown = false
             }
+
             bottomSheetDialog.show()
 
             bottomSheetShown = true
