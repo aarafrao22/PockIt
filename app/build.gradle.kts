@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.google.gms.google.services)
     alias(libs.plugins.jetbrains.kotlin.android)
+    kotlin("kapt") // Ensure kapt plugin is applied
 }
 
 android {
@@ -67,6 +68,20 @@ dependencies {
 //    implementation("com.android.support:support-emoji:28.0.0")
 //    implementation("com.vanniktech:emoji-google:0.15.0")
 //    implementation ("com.vanniktech:emoji-google:0.8.0")
+
+    // Room components
+    implementation ("androidx.room:room-runtime:2.5.0")
+    kapt ("androidx.room:room-compiler:2.5.0")
+
+    // Kotlin Extensions and Coroutines support for Room
+    implementation ("androidx.room:room-ktx:2.5.0")
+
+    // Optional - Test helpers
+    testImplementation ("androidx.room:room-testing:2.5.0")
+
+    // Coroutines
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
 
 
 }

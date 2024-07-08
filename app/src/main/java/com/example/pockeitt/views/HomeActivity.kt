@@ -129,9 +129,11 @@ class HomeActivity : AppCompatActivity() {
         bottomSheetBehavior!!.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(view: View, state: Int) {
                 if (state == BottomSheetBehavior.STATE_COLLAPSED) {
+
                     val expense = Objects.requireNonNull(
                         edExpense!!.text
                     ).toString()
+
                     val date = spinnerDate!!.text.toString()
                     val category = spinnerCat!!.text.toString()
                     val notes = Objects.requireNonNull(edNotes!!.text).toString()
@@ -143,17 +145,20 @@ class HomeActivity : AppCompatActivity() {
                         val builder = AlertDialog.Builder(this@HomeActivity)
                         builder.setTitle("Are you sure?")
                         builder.setMessage("Do you wanna save this?")
-                        builder.setPositiveButton("Yes") { dialog: DialogInterface?, which: Int ->
+                        builder.setPositiveButton("Yes") { _: DialogInterface?, _: Int ->
+
                             Toast.makeText(
                                 this@HomeActivity,
                                 "Saved",
                                 Toast.LENGTH_SHORT
                             ).show()
+
                             saveDataInDatabase(expense, date, category, notes)
+
                         }
                         builder.setNegativeButton(
                             "No"
-                        ) { dialog: DialogInterface?, which: Int ->
+                        ) { _: DialogInterface?, _: Int ->
                             Toast.makeText(
                                 this@HomeActivity,
                                 "Cancelled",
