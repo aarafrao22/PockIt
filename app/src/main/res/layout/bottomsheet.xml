@@ -139,9 +139,10 @@
                     android:layout_height="match_parent" />
             </com.google.android.material.textfield.TextInputLayout>
 
+
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/textfield2"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:id="@+id/field_date"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="80dp"
@@ -157,13 +158,15 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/textfield"
                 app:layout_constraintWidth_percent="0.86"
-                app:placeholderText="9 June 2024">
+                app:placeholderText="@string/date">
 
-                <AutoCompleteTextView
-                    android:id="@+id/spinner_date"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/ed_date"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:inputType="none" />
+                    android:inputType="text"
+                    android:padding="19dp" />
+
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -182,7 +185,7 @@
                 app:errorTextAppearance="@style/CustomTextInputLayoutHintStyle"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="@+id/textfield2"
+                app:layout_constraintTop_toTopOf="@+id/field_date"
                 app:layout_constraintWidth_percent="0.86"
                 app:placeholderText="@string/write_notes_here">
 

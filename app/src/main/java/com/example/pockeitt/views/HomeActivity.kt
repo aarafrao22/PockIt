@@ -41,9 +41,11 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Date
 import java.util.Objects
@@ -58,7 +60,6 @@ class HomeActivity : AppCompatActivity() {
     private var expandableListDetail: HashMap<String, MutableList<String>>? = null
     private var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout?>? = null
     private var bottomSheetShown = false
-
     private lateinit var sheet: ConstraintLayout
     private var btnRepeat: ConstraintLayout? = null
     private var btnWeekly: Button? = null
@@ -69,7 +70,7 @@ class HomeActivity : AppCompatActivity() {
     var edExpense: TextInputEditText? = null
     var edNotes: TextInputEditText? = null
     var spinnerCat: AutoCompleteTextView? = null
-    var spinnerDate: AutoCompleteTextView? = null
+    private lateinit var spinnerDate: TextInputEditText
     private lateinit var database: AppDatabase
 
     @SuppressLint("MissingInflatedId", "ClickableViewAccessibility")
@@ -82,9 +83,12 @@ class HomeActivity : AppCompatActivity() {
         initViews()
         setupBottomSheet()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            setupExpandableListView()
+        MainScope().launch {
+            withContext(Dispatchers.Default) {
+                setupExpandableListView()
+            }
         }
+
         setupTabLayout()
         setupDatePicker()
         setupButtons()
@@ -121,12 +125,29 @@ class HomeActivity : AppCompatActivity() {
         //sheet init
         edExpense = sheet.findViewById(R.id.ed_expense)
         spinnerCat = sheet.findViewById(R.id.spinner_cat)
-        spinnerDate = sheet.findViewById(R.id.spinner_date)
+        spinnerDate = sheet.findViewById(R.id.ed_date)
         edNotes = sheet.findViewById(R.id.ed_notes)
         database = DatabaseBuilder.getInstance(this)
 
 
         setData()
+
+
+        spinnerDate.setOnFocusChangeListener { _, _ ->
+            val calendar = Calendar.getInstance()
+            val year = calendar.get(Calendar.YEAR)
+            val month = calendar.get(Calendar.MONTH)
+            val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+            val datePickerDialog =
+                DatePickerDialog(this, { _, selectedYear, selectedMonth, selectedDay ->
+                    val selectedDate = "$selectedDay/${selectedMonth + 1}/$selectedYear"
+                    spinnerDate.setText(selectedDate)
+                }, year, month, day)
+
+            datePickerDialog.show()
+        }
+
     }
 
     private fun setData() {
@@ -140,6 +161,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupBottomSheet() {
+
         bottomSheetBehavior!!.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(view: View, state: Int) {
                 if (state == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -148,7 +170,7 @@ class HomeActivity : AppCompatActivity() {
                         edExpense!!.text
                     ).toString()
 
-                    val date = spinnerDate!!.text.toString()
+                    val date = spinnerDate.text.toString()
                     val category = spinnerCat!!.text.toString()
                     val notes = Objects.requireNonNull(edNotes!!.text).toString()
 
@@ -160,16 +182,14 @@ class HomeActivity : AppCompatActivity() {
                         builder.setTitle("Are you sure?")
                         builder.setMessage("Do you wanna save this?")
                         builder.setPositiveButton("Yes") { _: DialogInterface?, _: Int ->
-
                             Toast.makeText(
                                 this@HomeActivity,
                                 "Saved",
                                 Toast.LENGTH_SHORT
                             ).show()
-
                             saveDataInDatabase(expense, date, category, notes)
-
                         }
+
                         builder.setNegativeButton(
                             "No"
                         ) { _: DialogInterface?, _: Int ->
@@ -210,15 +230,23 @@ class HomeActivity : AppCompatActivity() {
         )
 
         // Using a coroutine to perform database operations
-        CoroutineScope(Dispatchers.IO).launch {
-            incomeExpenseDao.insert(newRecord)
-            refreshData()
+
+        MainScope().launch {
+            withContext(Dispatchers.Default) {
+                incomeExpenseDao.insert(newRecord)
+                refreshData()
+            }
         }
+
 
     }
 
-    private suspend fun refreshData() {
-        setupExpandableListView()
+    private fun refreshData() {
+        MainScope().launch {
+            withContext(Dispatchers.Default) {
+                setupExpandableListView()
+            }
+        }
 
         //remove all dummy items for potential lists
     }
@@ -227,7 +255,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
 
-    private suspend fun setupExpandableListView() {
+    private fun setupExpandableListView() {
 
         val list = getDataFromDatabase()
 
@@ -255,11 +283,10 @@ class HomeActivity : AppCompatActivity() {
         expandableListAdapter =
             CustomExpandableListAdapter(this, expandableListTitle, expandableListDetail)
         expandableListView!!.setAdapter(expandableListAdapter)
-
         expandableListView!!.setOnGroupExpandListener { groupPosition: Int -> }
     }
 
-    suspend fun getDataFromDatabase(): List<IncomeExpense> {
+    private fun getDataFromDatabase(): List<IncomeExpense> {
         return database.incomeExpenseDao().getAllIncomeExpenses()
     }
 

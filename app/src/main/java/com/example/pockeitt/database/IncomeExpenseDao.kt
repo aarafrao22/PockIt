@@ -24,7 +24,7 @@ interface IncomeExpenseDao {
      fun getAllIncomeExpenses(): List<IncomeExpense>
 
 //    @Query("SELECT * FROM income_expense WHERE id = :id")
-//    suspend fun getIncomeExpenseById(id: Int): IncomeExpense?
+//    suspend fun getIncomeExpenseById(id: Int): IncomeExpense?`
 
     // Example query to get all expenses for a specific category
 //    @Query("SELECT * FROM income_expense WHERE category = :category ORDER BY date DESC")
