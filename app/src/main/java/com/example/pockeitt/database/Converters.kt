@@ -1,4 +1,4 @@
-package com.example.pockeitt.utils
+package com.example.pockeitt.database
 
 import androidx.room.TypeConverter
 import java.util.Date

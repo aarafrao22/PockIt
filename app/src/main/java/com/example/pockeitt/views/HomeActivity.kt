@@ -29,6 +29,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.pockeitt.R
+import com.example.pockeitt.database.AppDatabase
+import com.example.pockeitt.database.DatabaseBuilder
+import com.example.pockeitt.models.IncomeExpense
+import com.example.pockeitt.models.RepeatType
 import com.example.pockeitt.utils.CustomExpandableListAdapter
 import com.example.pockeitt.utils.ListDataPump
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -37,9 +41,14 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.google.android.material.textfield.TextInputEditText
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Date
 import java.util.Objects
 
+@Suppress("DEPRECATION")
 class HomeActivity : AppCompatActivity() {
     private var datePickerDialog: DatePickerDialog? = null
     private var dateButton: Button? = null
@@ -61,6 +70,7 @@ class HomeActivity : AppCompatActivity() {
     var edNotes: TextInputEditText? = null
     var spinnerCat: AutoCompleteTextView? = null
     var spinnerDate: AutoCompleteTextView? = null
+    private lateinit var database: AppDatabase
 
     @SuppressLint("MissingInflatedId", "ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +81,10 @@ class HomeActivity : AppCompatActivity() {
 
         initViews()
         setupBottomSheet()
-        setupExpandableListView()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            setupExpandableListView()
+        }
         setupTabLayout()
         setupDatePicker()
         setupButtons()
@@ -110,6 +123,7 @@ class HomeActivity : AppCompatActivity() {
         spinnerCat = sheet.findViewById(R.id.spinner_cat)
         spinnerDate = sheet.findViewById(R.id.spinner_date)
         edNotes = sheet.findViewById(R.id.ed_notes)
+        database = DatabaseBuilder.getInstance(this)
 
 
         setData()
@@ -180,23 +194,30 @@ class HomeActivity : AppCompatActivity() {
         // To add an item
         ListDataPump.addItem(category, expense)
 
+        // Getting the DAO
+        val incomeExpenseDao = database.incomeExpenseDao()
 
-        refreshData()
+        // Inserting a record
+        val newRecord = IncomeExpense(
+            category = "Salary",
+            emoji = "💰",
+            amount = 5000.0,
+            date = Date(),
+            domain = "Income",
+            notes = "June Salary",
+            name = "Monthly Salary",
+            repeat = RepeatType.MONTHLY
+        )
 
-        //        // To remove an item
-//        ListDataPump.removeItem("Bills", "➕ Add Bills here");
-//
-//        // To update an item
-//        ListDataPump.updateItem("Bills", 0, "Updated Bill Item");
-//
-//        // To get the list of items
-//        List<String> bills = ListDataPump.getList("Bills");
-//
-//        // To get the entire data
-//        HashMap<String, List<String>> data = ListDataPump.getData();
+        // Using a coroutine to perform database operations
+        CoroutineScope(Dispatchers.IO).launch {
+            incomeExpenseDao.insert(newRecord)
+            refreshData()
+        }
+
     }
 
-    private fun refreshData() {
+    private suspend fun refreshData() {
         setupExpandableListView()
 
         //remove all dummy items for potential lists
@@ -206,7 +227,12 @@ class HomeActivity : AppCompatActivity() {
     }
 
 
-    private fun setupExpandableListView() {
+    private suspend fun setupExpandableListView() {
+
+        val list = getDataFromDatabase()
+
+        Log.d("List ", list.toString())
+
         expandableListDetail = ListDataPump.data
         expandableListTitle = ArrayList(expandableListDetail!!.keys)
 
@@ -231,6 +257,10 @@ class HomeActivity : AppCompatActivity() {
         expandableListView!!.setAdapter(expandableListAdapter)
 
         expandableListView!!.setOnGroupExpandListener { groupPosition: Int -> }
+    }
+
+    suspend fun getDataFromDatabase(): List<IncomeExpense> {
+        return database.incomeExpenseDao().getAllIncomeExpenses()
     }
 
     private fun setupTabLayout() {
