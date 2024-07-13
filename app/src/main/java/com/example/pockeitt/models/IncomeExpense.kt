@@ -1,4 +1,5 @@
 package com.example.pockeitt.models
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.Date
@@ -10,7 +11,7 @@ data class IncomeExpense(
     val emoji: String, // Added emoji property
     val amount: Double,
     val date: Date,
-    val domain: String,
+    val domain: Domain,
     val notes: String,
     val name: String,
     val repeat: RepeatType
@@ -20,4 +21,9 @@ enum class RepeatType {
     MONTHLY,
     WEEKLY,
     NEVER
+}
+
+enum class Domain {
+    INCOME,
+    EXPENSE
 }

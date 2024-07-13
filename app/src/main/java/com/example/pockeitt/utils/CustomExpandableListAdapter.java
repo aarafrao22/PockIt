@@ -72,18 +72,9 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
 
 
                 BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(context);
-//                View bottomSheetView = LayoutInflater.from(context).inflate(R.layout.bottomsheet, parent, false);
-//                bottomSheetDialog.setContentView(bottomSheetView);
-//                bottomSheetDialog.show();
-
-//                Toast.makeText(context, "You can add item now", Toast.LENGTH_SHORT).show();
-
 
                 View bottomSheetView = LayoutInflater.from(context).inflate(R.layout.bottomsheet, parent, false);
-
-                // Ensure the bottom sheet's height is set to match_parent
-                bottomSheetView.setLayoutParams(new ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+                bottomSheetView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
                 bottomSheetDialog.setContentView(bottomSheetView);
 

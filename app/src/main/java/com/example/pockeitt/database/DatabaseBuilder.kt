@@ -20,5 +20,6 @@ object DatabaseBuilder {
             context.applicationContext,
             AppDatabase::class.java,
             "income-expense-database"
-        ).build()
+        ).allowMainThreadQueries()
+            .fallbackToDestructiveMigration().build()
 }

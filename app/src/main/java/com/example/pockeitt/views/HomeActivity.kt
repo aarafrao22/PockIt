@@ -31,27 +31,30 @@ import androidx.core.view.WindowInsetsCompat
 import com.example.pockeitt.R
 import com.example.pockeitt.database.AppDatabase
 import com.example.pockeitt.database.DatabaseBuilder
+import com.example.pockeitt.models.Domain
 import com.example.pockeitt.models.IncomeExpense
 import com.example.pockeitt.models.RepeatType
 import com.example.pockeitt.utils.CustomExpandableListAdapter
 import com.example.pockeitt.utils.ListDataPump
+import com.example.pockeitt.utils.Methods
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
+import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
 import com.google.android.material.textfield.TextInputEditText
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Date
-import java.util.Objects
 
 @Suppress("DEPRECATION")
 class HomeActivity : AppCompatActivity() {
+    private lateinit var fab: FloatingActionButton
     private var datePickerDialog: DatePickerDialog? = null
     private var dateButton: Button? = null
     private var expandableListView: ExpandableListView? = null
@@ -66,11 +69,14 @@ class HomeActivity : AppCompatActivity() {
     private var btnMonthly: Button? = null
     private var imgRepeat: ImageView? = null
     private var textRepeat: TextView? = null
-    private var textAmount: TextView? = null
-    var edExpense: TextInputEditText? = null
+    private var edAmount: TextView? = null
+    var edName: TextInputEditText? = null
+    private var list: MutableList<IncomeExpense>? = null
     var edNotes: TextInputEditText? = null
     var spinnerCat: AutoCompleteTextView? = null
     private lateinit var spinnerDate: TextInputEditText
+    private var repeatType: RepeatType = RepeatType.NEVER
+    private var domain: Domain = Domain.INCOME
     private lateinit var database: AppDatabase
 
     @SuppressLint("MissingInflatedId", "ClickableViewAccessibility")
@@ -84,10 +90,9 @@ class HomeActivity : AppCompatActivity() {
         setupBottomSheet()
 
         MainScope().launch {
-            withContext(Dispatchers.Default) {
-                setupExpandableListView()
-            }
+            setupExpandableListView(domain)
         }
+
 
         setupTabLayout()
         setupDatePicker()
@@ -113,8 +118,9 @@ class HomeActivity : AppCompatActivity() {
 
         imgRepeat = findViewById(R.id.repeat_circle)
         textRepeat = findViewById(R.id.textView2)
+        fab = findViewById(R.id.floating)
+
         btnRepeat = findViewById(R.id.mainlayout)
-        textAmount = findViewById(R.id.amount_edit)
         dateButton = findViewById(R.id.calender_btn)
 
         expandableListView = findViewById(R.id.expandableListViewSample)
@@ -123,10 +129,13 @@ class HomeActivity : AppCompatActivity() {
 
 
         //sheet init
-        edExpense = sheet.findViewById(R.id.ed_expense)
+        edName = sheet.findViewById(R.id.ed_name)
+        edAmount = sheet.findViewById(R.id.amount_edit)
         spinnerCat = sheet.findViewById(R.id.spinner_cat)
         spinnerDate = sheet.findViewById(R.id.ed_date)
         edNotes = sheet.findViewById(R.id.ed_notes)
+
+
         database = DatabaseBuilder.getInstance(this)
 
 
@@ -148,6 +157,10 @@ class HomeActivity : AppCompatActivity() {
             datePickerDialog.show()
         }
 
+        fab.setOnClickListener {
+            bottomSheetBehavior!!.state = STATE_EXPANDED
+        }
+
     }
 
     private fun setData() {
@@ -166,18 +179,38 @@ class HomeActivity : AppCompatActivity() {
             override fun onStateChanged(view: View, state: Int) {
                 if (state == BottomSheetBehavior.STATE_COLLAPSED) {
 
-                    val expense = Objects.requireNonNull(
-                        edExpense!!.text
-                    ).toString()
-
+                    val name = edName!!.text.toString()
+                    val amount = edAmount!!.text.toString()
                     val date = spinnerDate.text.toString()
                     val category = spinnerCat!!.text.toString()
-                    val notes = Objects.requireNonNull(edNotes!!.text).toString()
+                    val notes = edNotes!!.text.toString()
+                    var isValid = true
 
-                    if (expense.isEmpty() && date.isEmpty() && category.isEmpty() && notes.isEmpty()) {
-                        Toast.makeText(this@HomeActivity, "Nahi Kr sktay", Toast.LENGTH_SHORT)
-                            .show()
-                    } else {
+                    if (name.isEmpty()) {
+                        edName!!.error = "Can't be empty"
+                        isValid = false
+                    }
+                    if (amount.isEmpty()) {
+                        edAmount!!.error = "Can't be empty"
+                        isValid = false
+                    }
+
+                    if (date.isEmpty()) {
+                        spinnerDate.error = "Can't be empty"
+                        isValid = false
+                    }
+
+                    if (category.isEmpty()) {
+                        spinnerCat!!.error = "Can't be empty"
+                        isValid = false
+                    }
+
+                    if (notes.isEmpty()) {
+                        edNotes!!.error = "Can't be empty"
+                        isValid = false
+                    }
+
+                    if (isValid) {
                         val builder = AlertDialog.Builder(this@HomeActivity)
                         builder.setTitle("Are you sure?")
                         builder.setMessage("Do you wanna save this?")
@@ -187,7 +220,23 @@ class HomeActivity : AppCompatActivity() {
                                 "Saved",
                                 Toast.LENGTH_SHORT
                             ).show()
-                            saveDataInDatabase(expense, date, category, notes)
+                            saveDataInDatabase(
+                                name,
+                                Methods.convertStringToDate(date) as Date,
+                                category,
+                                notes,
+                                amount.toDouble(),
+                                repeatType
+                            )
+
+
+                            edName!!.text = null
+                            edAmount!!.text = null
+                            spinnerDate.text = null
+                            spinnerCat!!.text = null
+                            edNotes!!.text = null
+
+                            Toast.makeText(applicationContext, "Saved!", Toast.LENGTH_SHORT).show()
                         }
 
                         builder.setNegativeButton(
@@ -200,6 +249,15 @@ class HomeActivity : AppCompatActivity() {
                             ).show()
                         }
                         builder.show()
+                    } else {
+//                        don't let them collapse bottom sheet
+                        bottomSheetBehavior!!.state = STATE_EXPANDED
+                        Toast.makeText(
+                            applicationContext,
+                            "Before saving, fill all the field ",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
                     }
                 }
             }
@@ -210,31 +268,41 @@ class HomeActivity : AppCompatActivity() {
         })
     }
 
-    private fun saveDataInDatabase(expense: String, date: String, category: String, notes: String) {
+
+    private fun saveDataInDatabase(
+        name: String,
+        date: Date,
+        category: String,
+        notes: String,
+        amount: Double,
+        repeatType: RepeatType
+    ) {
         // To add an item
-        ListDataPump.addItem(category, expense)
+        ListDataPump.addItem(category, name)
 
         // Getting the DAO
         val incomeExpenseDao = database.incomeExpenseDao()
 
-        // Inserting a record
-        val newRecord = IncomeExpense(
-            category = "Salary",
-            emoji = "💰",
-            amount = 5000.0,
-            date = Date(),
-            domain = "Income",
-            notes = "June Salary",
-            name = "Monthly Salary",
-            repeat = RepeatType.MONTHLY
+        val record = IncomeExpense(
+            category = category,
+            amount = amount,
+            emoji = "",
+            date = date,
+            domain = domain,
+            repeat = repeatType,
+            notes = notes,
+            name = name
         )
+
 
         // Using a coroutine to perform database operations
 
         MainScope().launch {
-            withContext(Dispatchers.Default) {
-                incomeExpenseDao.insert(newRecord)
-                refreshData()
+            withContext(Dispatchers.IO) {
+                incomeExpenseDao.insert(record)
+                withContext(Dispatchers.Main) {
+                    refreshData()
+                }
             }
         }
 
@@ -243,47 +311,54 @@ class HomeActivity : AppCompatActivity() {
 
     private fun refreshData() {
         MainScope().launch {
-            withContext(Dispatchers.Default) {
-                setupExpandableListView()
+            setupExpandableListView(domain)
+        }
+    }
+
+
+    private fun setupExpandableListView(domain: Domain) {
+        MainScope().launch {
+
+            list = withContext(Dispatchers.IO) {
+                getDataFromDatabase() as MutableList<IncomeExpense>
+            }
+
+            for (i in 1..<list!!.size) {
+
+                val categories = arrayListOf<String>()
+                val catItem = list!![i].category
+
+                if (!categories.contains(catItem))
+                    categories.add(catItem)
+                else
+                    println(categories.toString())
+            }
+
+
+            expandableListDetail = ListDataPump.data
+            expandableListTitle = ArrayList(expandableListDetail!!.keys)
+
+            // Add Dummy Data
+            for (key in expandableListTitle as ArrayList<String>) {
+                if (expandableListDetail!![key]!!.isEmpty()) ListDataPump.addItem(
+                    key,
+                    "➕ Add $key here"
+                )
+                // if there is more than one item in the list
+                // then remove add here item
+            }
+
+            expandableListAdapter =
+                CustomExpandableListAdapter(
+                    this@HomeActivity,
+                    expandableListTitle,
+                    expandableListDetail
+                )
+            expandableListView!!.setAdapter(expandableListAdapter)
+            expandableListView!!.setOnGroupExpandListener {
+
             }
         }
-
-        //remove all dummy items for potential lists
-    }
-
-    private fun showAlertDialogue(title: String, body: String) {
-    }
-
-
-    private fun setupExpandableListView() {
-
-        val list = getDataFromDatabase()
-
-        Log.d("List ", list.toString())
-
-        expandableListDetail = ListDataPump.data
-        expandableListTitle = ArrayList(expandableListDetail!!.keys)
-
-        //Add Dummy Data
-        for (key in expandableListTitle as ArrayList<String>) {
-            if (expandableListDetail!![key]!!.isEmpty()) ListDataPump.addItem(
-                key,
-                "➕ Add $key here"
-            )
-
-            //if there is more than one items in the list
-            // than remove add here item
-
-//            else if (expandableListDetail.get(key).size() > 1) {
-//                ListDataPump.removeItem(key, "➕ Add " + key + " here");
-//
-//            }
-        }
-
-        expandableListAdapter =
-            CustomExpandableListAdapter(this, expandableListTitle, expandableListDetail)
-        expandableListView!!.setAdapter(expandableListAdapter)
-        expandableListView!!.setOnGroupExpandListener { groupPosition: Int -> }
     }
 
     private fun getDataFromDatabase(): List<IncomeExpense> {
@@ -296,8 +371,19 @@ class HomeActivity : AppCompatActivity() {
         tabLayout.addOnTabSelectedListener(object : OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 val tabView: View = tab.view
+
+                domain = when (tab.position) {
+                    0 -> Domain.INCOME
+                    else -> Domain.EXPENSE
+                }
+
+                updateExpandableListViews(domain)
+
                 tabView.setBackgroundResource(R.drawable.tab_border)
                 setTabTextSize(tab, 19, R.color.blue)
+
+
+                Log.d("TAG SLECTED", "${tab.position} ")
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {
@@ -312,31 +398,62 @@ class HomeActivity : AppCompatActivity() {
         })
     }
 
-    private fun setupButtons() {
-        btnMonthly!!.setOnClickListener { v: View? ->
+    private fun updateExpandableListViews(domain: Domain) {
 
-            if (btnMonthly!!.isEnabled) {
-                btnMonthly!!.isEnabled = false
-                btnWeekly!!.isEnabled = true
-                btnMonthly!!.setBackgroundColor(resources.getColor(R.color.white))
-                btnWeekly!!.setBackgroundColor(resources.getColor(R.color.green))
-                imgRepeat!!.setImageResource(R.drawable.repeat_circle_greeen)
+//        TODO()
+        when (domain) {
+            Domain.INCOME -> {
+                //Write to Load Incomes
             }
+
+            Domain.EXPENSE -> {
+                //Write to Load Expenses
+            }
+
         }
 
-        btnWeekly!!.setOnClickListener { v: View? ->
-            if (btnWeekly!!.isEnabled) {
-                btnWeekly!!.isEnabled = false
-                btnMonthly!!.isEnabled = true
-                btnWeekly!!.setBackgroundColor(resources.getColor(R.color.white))
-                btnMonthly!!.setBackgroundColor(resources.getColor(R.color.green))
-                imgRepeat!!.setImageResource(R.drawable.repeat_circle_greeen)
-            }
+    }
+
+    private fun setupButtons() {
+        btnMonthly!!.setOnClickListener {
+            setButtonState(isMonthlySelected = true)
+
+        }
+
+        btnWeekly!!.setOnClickListener {
+            setButtonState(isMonthlySelected = false)
+
         }
     }
 
+    private fun setButtonState(isMonthlySelected: Boolean) {
+
+        if (isMonthlySelected) {
+
+            // If Monthly button is selected:
+            // Disable the Monthly button
+            btnMonthly!!.setBackgroundColor(resources.getColor(R.color.green)) // Set Monthly button background to green
+            // Enable the Weekly button
+            btnWeekly!!.setBackgroundColor(resources.getColor(R.color.white)) // Set Weekly button background to white
+            repeatType = RepeatType.MONTHLY // Set repeat type to MONTHLY
+        } else {
+
+            // If Weekly button is selected:
+            // Disable the Weekly button
+            btnWeekly!!.setBackgroundColor(resources.getColor(R.color.green)) // Set Weekly button background to green
+            // Enable the Monthly button
+            btnMonthly!!.setBackgroundColor(resources.getColor(R.color.white)) // Set Monthly button background to white
+            repeatType = RepeatType.WEEKLY // Set repeat type to WEEKLY
+        }
+
+        // Set the repeat circle image resource
+        imgRepeat!!.setImageResource(R.drawable.repeat_circle_greeen)
+
+        Log.d("repeatType", "setButtonState: $repeatType")
+    }
+
     private fun setupTextWatcher() {
-        textAmount!!.addTextChangedListener(object : TextWatcher {
+        edAmount!!.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
                 // Handle before text changed
             }

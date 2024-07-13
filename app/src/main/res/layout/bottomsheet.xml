@@ -103,7 +103,7 @@
                 app:placeholderText="@string/expense_name">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/ed_expense"
+                    android:id="@+id/ed_name"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:drawableEnd="@drawable/vector"
@@ -239,13 +239,14 @@
                         android:id="@+id/textView2"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="4dp"
+                        android:layout_marginStart="4dp"
                         android:fontFamily="@font/poppins"
-                        android:lineSpacingExtra="-2sp"
+                        android:includeFontPadding="false"
+                        android:lineSpacingExtra="-6sp"
                         android:text="@string/repeat_payments"
                         android:textAlignment="textStart"
                         android:textColor="@color/blue"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         app:layout_constraintBottom_toBottomOf="@+id/repeat_circle"
                         app:layout_constraintStart_toEndOf="@id/repeat_circle"
                         app:layout_constraintTop_toTopOf="@id/repeat_circle" />
