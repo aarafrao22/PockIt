@@ -6,6 +6,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.DatePickerDialog.OnDateSetListener
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
@@ -177,49 +178,42 @@ class HomeActivity : AppCompatActivity() {
 
         bottomSheetBehavior!!.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(view: View, state: Int) {
-                if (state == BottomSheetBehavior.STATE_COLLAPSED) {
 
+                if (state == BottomSheetBehavior.STATE_COLLAPSED) {
                     val name = edName!!.text.toString()
                     val amount = edAmount!!.text.toString()
                     val date = spinnerDate.text.toString()
                     val category = spinnerCat!!.text.toString()
                     val notes = edNotes!!.text.toString()
+
+                    // Check if any field is empty
                     var isValid = true
 
-                    if (name.isEmpty()) {
-                        edName!!.error = "Can't be empty"
-                        isValid = false
-                    }
-                    if (amount.isEmpty()) {
-                        edAmount!!.error = "Can't be empty"
+                    if (name.isNotEmpty() || amount.isNotEmpty() || date.isNotEmpty() || category.isNotEmpty() || notes.isNotEmpty()) {
                         isValid = false
                     }
 
-                    if (date.isEmpty()) {
-                        spinnerDate.error = "Can't be empty"
-                        isValid = false
+
+
+                    if (!isValid) {
+                        // Don't let them collapse the bottom sheet
+                        bottomSheetBehavior!!.state = STATE_EXPANDED
+                        Toast.makeText(
+                            applicationContext,
+                            "Before saving, fill all fields",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return
                     }
 
-                    if (category.isEmpty()) {
-                        spinnerCat!!.error = "Can't be empty"
-                        isValid = false
-                    }
-
-                    if (notes.isEmpty()) {
-                        edNotes!!.error = "Can't be empty"
-                        isValid = false
-                    }
-
-                    if (isValid) {
+                    if (notes.isNotEmpty() && category.isNotEmpty() && amount.isNotEmpty() && date.isNotEmpty() && name.isNotEmpty()) {
                         val builder = AlertDialog.Builder(this@HomeActivity)
                         builder.setTitle("Are you sure?")
-                        builder.setMessage("Do you wanna save this?")
-                        builder.setPositiveButton("Yes") { _: DialogInterface?, _: Int ->
-                            Toast.makeText(
-                                this@HomeActivity,
-                                "Saved",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                        builder.setMessage("Do you want to save this?")
+                        builder.setPositiveButton("Yes") { _, _ ->
+                            Toast.makeText(this@HomeActivity, "Saved", Toast.LENGTH_SHORT).show()
+
+                            // Perform your save operation here
                             saveDataInDatabase(
                                 name,
                                 Methods.convertStringToDate(date) as Date,
@@ -229,7 +223,7 @@ class HomeActivity : AppCompatActivity() {
                                 repeatType
                             )
 
-
+                            // Clear all fields after saving
                             edName!!.text = null
                             edAmount!!.text = null
                             spinnerDate.text = null
@@ -237,28 +231,18 @@ class HomeActivity : AppCompatActivity() {
                             edNotes!!.text = null
 
                             Toast.makeText(applicationContext, "Saved!", Toast.LENGTH_SHORT).show()
+                            builder.setNegativeButton("No") { _, _ ->
+                                Toast.makeText(this@HomeActivity, "Cancelled", Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+
+                            builder.show()
                         }
 
-                        builder.setNegativeButton(
-                            "No"
-                        ) { _: DialogInterface?, _: Int ->
-                            Toast.makeText(
-                                this@HomeActivity,
-                                "Cancelled",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        builder.show()
-                    } else {
-//                        don't let them collapse bottom sheet
-                        bottomSheetBehavior!!.state = STATE_EXPANDED
-                        Toast.makeText(
-                            applicationContext,
-                            "Before saving, fill all the field ",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        // All fields are filled, show the alert dialog to save
 
                     }
+
                 }
             }
 
@@ -275,7 +259,7 @@ class HomeActivity : AppCompatActivity() {
         category: String,
         notes: String,
         amount: Double,
-        repeatType: RepeatType
+        repeatType: RepeatType,
     ) {
         // To add an item
         ListDataPump.addItem(category, name)
@@ -404,10 +388,12 @@ class HomeActivity : AppCompatActivity() {
         when (domain) {
             Domain.INCOME -> {
                 //Write to Load Incomes
+                Log.d(TAG, "Domain.INCOME: ")
             }
 
             Domain.EXPENSE -> {
                 //Write to Load Expenses
+                Log.d(TAG, "Domain.Expense: ")
             }
 
         }

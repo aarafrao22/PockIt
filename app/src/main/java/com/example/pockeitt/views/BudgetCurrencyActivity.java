@@ -30,7 +30,7 @@ public class BudgetCurrencyActivity extends AppCompatActivity {
 
         });
 
-        textfield = findViewById(R.id.textfield);
+        textfield = findViewById(R.id.field_category);
 
         designspinner = findViewById(R.id.spinner_cat);
         textfield.setOnFocusChangeListener((v, hasFocus) -> {

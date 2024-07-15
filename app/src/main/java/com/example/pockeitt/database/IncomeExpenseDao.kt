@@ -7,7 +7,6 @@ import androidx.room.Query
 import androidx.room.Update
 import com.example.pockeitt.models.Domain
 import com.example.pockeitt.models.IncomeExpense
-import com.example.pockeitt.models.RepeatType
 import java.util.Date
 
 @Dao
@@ -24,13 +23,17 @@ interface IncomeExpenseDao {
 
 
     @Query("SELECT * FROM income_expense WHERE domain = :domain AND date >= :startOfMonth AND date <= :endOfMonth")
-    suspend fun getIncomeExpensesByDomainAndMonth(
+    fun getIncomeExpensesByDomainAndMonth(
         domain: Domain,
         startOfMonth: Date,
-        endOfMonth: Date
+        endOfMonth: Date,
     ): List<IncomeExpense>
 
     @Query("SELECT * FROM income_expense WHERE domain = :domain AND date >= :startOfMonth AND date <= :endOfMonth")
-    suspend fun getIncomeExpensesByMonth(startOfMonth: Date, endOfMonth: Date): List<IncomeExpense>
+    fun getIncomeExpensesByMonth(
+        startOfMonth: Date,
+        endOfMonth: Date,
+        domain: Domain,
+    ): List<IncomeExpense>
 
 }
