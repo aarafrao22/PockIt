@@ -6,11 +6,10 @@ object ListDataPump {
 
     init {
         data = HashMap()
+
         val bills: MutableList<String> = ArrayList()
         val needs: MutableList<String> = ArrayList()
-
         val wants: MutableList<String> = ArrayList()
-
         val savings: MutableList<String> = ArrayList()
 
         data["Bills"] = bills

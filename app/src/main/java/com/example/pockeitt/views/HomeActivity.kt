@@ -1,19 +1,15 @@
 package com.example.pockeitt.views
 
-
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.DatePickerDialog.OnDateSetListener
-import android.content.ContentValues
 import android.content.ContentValues.TAG
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
-import android.view.WindowManager
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import android.widget.Button
@@ -36,12 +32,10 @@ import com.example.pockeitt.models.Domain
 import com.example.pockeitt.models.IncomeExpense
 import com.example.pockeitt.models.RepeatType
 import com.example.pockeitt.utils.CustomExpandableListAdapter
-import com.example.pockeitt.utils.ListDataPump
 import com.example.pockeitt.utils.Methods
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetBehavior.BottomSheetCallback
 import com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED
-import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayout.OnTabSelectedListener
@@ -63,7 +57,9 @@ class HomeActivity : AppCompatActivity() {
     private var expandableListTitle: MutableList<String>? = null
     private var expandableListDetail: HashMap<String, MutableList<String>>? = null
     private var bottomSheetBehavior: BottomSheetBehavior<ConstraintLayout?>? = null
-    private var bottomSheetShown = false
+    private val map = HashMap<String, MutableList<String>>()
+
+    //    private var bottomSheetShown = false
     private lateinit var sheet: ConstraintLayout
     private var btnRepeat: ConstraintLayout? = null
     private var btnWeekly: Button? = null
@@ -114,7 +110,7 @@ class HomeActivity : AppCompatActivity() {
     private fun initViews() {
         sheet = findViewById(R.id.bottomsheet)
         bottomSheetBehavior = BottomSheetBehavior.from(sheet)
-        bottomSheetBehavior!!.peekHeight = 140
+        bottomSheetBehavior!!.peekHeight = 10
         bottomSheetBehavior!!.state = BottomSheetBehavior.STATE_COLLAPSED
 
         imgRepeat = findViewById(R.id.repeat_circle)
@@ -139,11 +135,13 @@ class HomeActivity : AppCompatActivity() {
 
         database = DatabaseBuilder.getInstance(this)
 
-
         setData()
 
 
         spinnerDate.setOnFocusChangeListener { _, _ ->
+
+            //TODO Only Month Should Show, not the Whole Date
+
             val calendar = Calendar.getInstance()
             val year = calendar.get(Calendar.YEAR)
             val month = calendar.get(Calendar.MONTH)
@@ -159,9 +157,13 @@ class HomeActivity : AppCompatActivity() {
         }
 
         fab.setOnClickListener {
-            bottomSheetBehavior!!.state = STATE_EXPANDED
+            expandBottomSheet()
         }
 
+    }
+
+    fun expandBottomSheet() {
+        bottomSheetBehavior!!.state = STATE_EXPANDED
     }
 
     private fun setData() {
@@ -179,6 +181,8 @@ class HomeActivity : AppCompatActivity() {
         bottomSheetBehavior!!.addBottomSheetCallback(object : BottomSheetCallback() {
             override fun onStateChanged(view: View, state: Int) {
 
+                Log.d("TAG", "onStateChanged: $state")
+
                 if (state == BottomSheetBehavior.STATE_COLLAPSED) {
                     val name = edName!!.text.toString()
                     val amount = edAmount!!.text.toString()
@@ -187,61 +191,61 @@ class HomeActivity : AppCompatActivity() {
                     val notes = edNotes!!.text.toString()
 
                     // Check if any field is empty
-                    var isValid = true
+//                    var isValid = true
 
-                    if (name.isNotEmpty() || amount.isNotEmpty() || date.isNotEmpty() || category.isNotEmpty() || notes.isNotEmpty()) {
-                        isValid = false
-                    }
+//                    if (name.isNotEmpty() || amount.isNotEmpty() || date.isNotEmpty() || category.isNotEmpty() || notes.isNotEmpty()) {
+//                        isValid = false
+//                    }
+//
+//
+//
+//                    if (!isValid) {
+//                        // Don't let them collapse the bottom sheet
+//                        bottomSheetBehavior!!.state = STATE_EXPANDED
+//                        Toast.makeText(
+//                            applicationContext,
+//                            "Before saving, fill all fields",
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                        return
+//                    }
 
+//                    if (notes.isNotEmpty() && category.isNotEmpty() && amount.isNotEmpty() && date.isNotEmpty() && name.isNotEmpty()) {
+                    val builder = AlertDialog.Builder(this@HomeActivity)
+                    builder.setTitle("Are you sure?")
+                    builder.setMessage("Do you want to save this?")
+                    builder.setPositiveButton("Yes") { _, _ ->
+                        Toast.makeText(this@HomeActivity, "Saved", Toast.LENGTH_SHORT).show()
 
+                        // Perform your save operation here
+                        saveDataInDatabase(
+                            name,
+                            Methods.convertStringToDate(date) as Date,
+                            category,
+                            notes,
+                            amount.toDouble(),
+                            repeatType
+                        )
 
-                    if (!isValid) {
-                        // Don't let them collapse the bottom sheet
-                        bottomSheetBehavior!!.state = STATE_EXPANDED
-                        Toast.makeText(
-                            applicationContext,
-                            "Before saving, fill all fields",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        return
-                    }
+                        // Clear all fields after saving
+                        edName!!.text = null
+                        edAmount!!.text = null
+                        spinnerDate.text = null
+                        spinnerCat!!.text = null
+                        edNotes!!.text = null
 
-                    if (notes.isNotEmpty() && category.isNotEmpty() && amount.isNotEmpty() && date.isNotEmpty() && name.isNotEmpty()) {
-                        val builder = AlertDialog.Builder(this@HomeActivity)
-                        builder.setTitle("Are you sure?")
-                        builder.setMessage("Do you want to save this?")
-                        builder.setPositiveButton("Yes") { _, _ ->
-                            Toast.makeText(this@HomeActivity, "Saved", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(applicationContext, "Saved!", Toast.LENGTH_SHORT).show()
 
-                            // Perform your save operation here
-                            saveDataInDatabase(
-                                name,
-                                Methods.convertStringToDate(date) as Date,
-                                category,
-                                notes,
-                                amount.toDouble(),
-                                repeatType
-                            )
-
-                            // Clear all fields after saving
-                            edName!!.text = null
-                            edAmount!!.text = null
-                            spinnerDate.text = null
-                            spinnerCat!!.text = null
-                            edNotes!!.text = null
-
-                            Toast.makeText(applicationContext, "Saved!", Toast.LENGTH_SHORT).show()
-                            builder.setNegativeButton("No") { _, _ ->
-                                Toast.makeText(this@HomeActivity, "Cancelled", Toast.LENGTH_SHORT)
-                                    .show()
-                            }
-
-                            builder.show()
-                        }
-
-                        // All fields are filled, show the alert dialog to save
 
                     }
+                    builder.setNegativeButton("No") { _, _ ->
+                        Toast.makeText(this@HomeActivity, "Cancelled", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                    builder.show()
+
+                    // All fields are filled, show the alert dialog to save
+
 
                 }
             }
@@ -262,7 +266,7 @@ class HomeActivity : AppCompatActivity() {
         repeatType: RepeatType,
     ) {
         // To add an item
-        ListDataPump.addItem(category, name)
+//        ListDataPump.addItem(category, name)
 
         // Getting the DAO
         val incomeExpenseDao = database.incomeExpenseDao()
@@ -278,9 +282,7 @@ class HomeActivity : AppCompatActivity() {
             name = name
         )
 
-
         // Using a coroutine to perform database operations
-
         MainScope().launch {
             withContext(Dispatchers.IO) {
                 incomeExpenseDao.insert(record)
@@ -289,7 +291,6 @@ class HomeActivity : AppCompatActivity() {
                 }
             }
         }
-
 
     }
 
@@ -303,40 +304,54 @@ class HomeActivity : AppCompatActivity() {
     private fun setupExpandableListView(domain: Domain) {
         MainScope().launch {
 
+
             list = withContext(Dispatchers.IO) {
                 getDataFromDatabase() as MutableList<IncomeExpense>
             }
 
-            for (i in 1..<list!!.size) {
+            val bills: MutableList<String> = ArrayList()
+            val needs: MutableList<String> = ArrayList()
+            val wants: MutableList<String> = ArrayList()
+            val savings: MutableList<String> = ArrayList()
+
+            map["Needs"] = needs
+            map["Bills"] = bills
+            map["Wants"] = wants
+            map["Savings"] = savings
+
+            for (i in 0..<list!!.size) {
 
                 val categories = arrayListOf<String>()
                 val catItem = list!![i].category
 
-                if (!categories.contains(catItem))
+                if (!categories.contains(catItem)) {
                     categories.add(catItem)
-                else
+                    map[catItem] = categories
+                } else
                     println(categories.toString())
             }
 
 
-            expandableListDetail = ListDataPump.data
+//            expandableListDetail = ListDataPump.data
+//            expandableListTitle = ArrayList(expandableListDetail!!.keys)
+
+
+            expandableListDetail = map
             expandableListTitle = ArrayList(expandableListDetail!!.keys)
 
             // Add Dummy Data
             for (key in expandableListTitle as ArrayList<String>) {
-                if (expandableListDetail!![key]!!.isEmpty()) ListDataPump.addItem(
-                    key,
-                    "➕ Add $key here"
-                )
-                // if there is more than one item in the list
-                // then remove add here item
+                if (expandableListDetail!![key]!!.isEmpty())
+                    addItem(key, "➕ Add $key here")
+                // if there is more than one item in the list then remove add here item
             }
 
             expandableListAdapter =
                 CustomExpandableListAdapter(
                     this@HomeActivity,
                     expandableListTitle,
-                    expandableListDetail
+                    expandableListDetail,
+                    this@HomeActivity
                 )
             expandableListView!!.setAdapter(expandableListAdapter)
             expandableListView!!.setOnGroupExpandListener {
@@ -346,7 +361,20 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun getDataFromDatabase(): List<IncomeExpense> {
-        return database.incomeExpenseDao().getAllIncomeExpenses()
+        val data = database.incomeExpenseDao().getAllIncomeExpenses()
+        Log.d(TAG, "getDataFromDatabase:$data")
+        return data
+    }
+
+    private fun addItem(key: String, item: String) {
+        var list = map[key]
+        if (list != null) {
+            list.add(item)
+        } else {
+            list = ArrayList()
+            list.add(item)
+            map[key] = list
+        }
     }
 
     private fun setupTabLayout() {
@@ -367,7 +395,7 @@ class HomeActivity : AppCompatActivity() {
                 setTabTextSize(tab, 19, R.color.blue)
 
 
-                Log.d("TAG SLECTED", "${tab.position} ")
+                Log.d("TAG SELECTED", "${tab.position} ")
             }
 
             override fun onTabUnselected(tab: TabLayout.Tab) {
@@ -445,18 +473,18 @@ class HomeActivity : AppCompatActivity() {
             }
 
             override fun onTextChanged(charSequence: CharSequence, i: Int, i1: Int, i2: Int) {
-                Log.d(ContentValues.TAG, "onTextChanged: $charSequence")
+                Log.d(TAG, "onTextChanged: $charSequence")
             }
 
             override fun afterTextChanged(editable: Editable) {
-                Log.d(ContentValues.TAG, "afterTextChanged: $editable")
+                Log.d(TAG, "afterTextChanged: $editable")
             }
         })
     }
 
     private fun setupDatePicker() {
         val dateSetListener =
-            OnDateSetListener { view: DatePicker?, year: Int, month: Int, dayOfMonth: Int ->
+            OnDateSetListener { _: DatePicker?, year: Int, month: Int, dayOfMonth: Int ->
                 var month = month
                 month += 1
                 val date = makeDateString(dayOfMonth, month, year)
@@ -507,22 +535,22 @@ class HomeActivity : AppCompatActivity() {
         datePickerDialog!!.show()
     }
 
-    private fun showBottomSheetDialog() {
-
-        if (!bottomSheetShown) {
-            val bottomSheetDialog = BottomSheetDialog(this)
-            bottomSheetDialog.setContentView(R.layout.bottomsheet)
-
-            bottomSheetDialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            bottomSheetDialog.setOnDismissListener { dialog: DialogInterface? ->
-                bottomSheetShown = false
-            }
-
-            bottomSheetDialog.show()
-
-            bottomSheetShown = true
-        }
-    }
+//    private fun showBottomSheetDialog() {
+//
+//        if (!bottomSheetShown) {
+//            val bottomSheetDialog = BottomSheetDialog(this)
+//            bottomSheetDialog.setContentView(R.layout.bottomsheet)
+//
+//            bottomSheetDialog.window!!.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+//            bottomSheetDialog.setOnDismissListener { _: DialogInterface? ->
+//                bottomSheetShown = false
+//            }
+//
+//            bottomSheetDialog.show()
+//
+//            bottomSheetShown = true
+//        }
+//    }
 
     private fun setTabTextSize(tab: TabLayout.Tab, tabSizeSp: Int, textColor: Int) {
         val tabCustomView = tab.customView
@@ -533,12 +561,12 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    private fun createCustomTabView(tabText: String, tabSizeSp: Int, textColor: Int): View {
-        val tabCustomView = layoutInflater.inflate(R.layout.activity_home, null)
-        val tabTextView = tabCustomView.findViewById<TextView>(R.id.tabItem1)
-        tabTextView.text = tabText
-        tabTextView.textSize = tabSizeSp.toFloat()
-        tabTextView.setTextColor(ContextCompat.getColor(tabCustomView.context, textColor))
-        return tabCustomView
-    }
+//    private fun createCustomTabView(tabText: String, tabSizeSp: Int, textColor: Int): View {
+//        val tabCustomView = layoutInflater.inflate(R.layout.activity_home, null)
+//        val tabTextView = tabCustomView.findViewById<TextView>(R.id.tabItem1)
+//        tabTextView.text = tabText
+//        tabTextView.textSize = tabSizeSp.toFloat()
+//        tabTextView.setTextColor(ContextCompat.getColor(tabCustomView.context, textColor))
+//        return tabCustomView
+//    }
 }

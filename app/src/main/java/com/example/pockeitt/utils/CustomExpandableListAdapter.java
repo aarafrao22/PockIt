@@ -14,8 +14,7 @@ import android.widget.TextView;
 import androidx.core.content.res.ResourcesCompat;
 
 import com.example.pockeitt.R;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.example.pockeitt.views.HomeActivity;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,13 +25,14 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
     private Context context;
     private List<String> expandableListTitle;
     private HashMap<String, List<String>> expandableListDetail;
+    private HomeActivity homeActivity;
 
 
-    public CustomExpandableListAdapter(Context context, List<String> expandableListTitle, HashMap<String, List<String>> expandableListDetail) {
+    public CustomExpandableListAdapter(Context context, List<String> expandableListTitle, HashMap<String, List<String>> expandableListDetail, HomeActivity homeActivity) {
         this.context = context;
         this.expandableListTitle = expandableListTitle;
         this.expandableListDetail = expandableListDetail;
-
+        this.homeActivity = homeActivity;
     }
 
     @Override
@@ -70,19 +70,19 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
             Log.d(TAG, "getChildView: ");
             convertView.setOnClickListener(v -> {
 
-
-                BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(context);
-
-                View bottomSheetView = LayoutInflater.from(context).inflate(R.layout.bottomsheet, parent, false);
-                bottomSheetView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-                bottomSheetDialog.setContentView(bottomSheetView);
-
-                // Get the BottomSheetBehavior
-                BottomSheetBehavior<View> bottomSheetBehavior = BottomSheetBehavior.from((View) bottomSheetView.getParent());
-                bottomSheetBehavior.setPeekHeight(BottomSheetBehavior.PEEK_HEIGHT_AUTO);
-                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
-                bottomSheetDialog.show();
+                homeActivity.expandBottomSheet();
+//                BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(context);
+//
+//                View bottomSheetView = LayoutInflater.from(context).inflate(R.layout.bottomsheet, parent, false);
+//                bottomSheetView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+//
+//                bottomSheetDialog.setContentView(bottomSheetView);
+//
+//                // Get the BottomSheetBehavior
+//                BottomSheetBehavior<View> bottomSheetBehavior = BottomSheetBehavior.from((View) bottomSheetView.getParent());
+//                bottomSheetBehavior.setPeekHeight(BottomSheetBehavior.PEEK_HEIGHT_AUTO);
+//                bottomSheetBehavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+//                bottomSheetDialog.show();
 
             });
         }
