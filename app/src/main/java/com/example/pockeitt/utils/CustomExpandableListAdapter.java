@@ -70,7 +70,6 @@ public class CustomExpandableListAdapter extends BaseExpandableListAdapter {
             Log.d(TAG, "getChildView: ");
             convertView.setOnClickListener(v -> {
 
-                homeActivity.expandBottomSheet();
 //                BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(context);
 //
 //                View bottomSheetView = LayoutInflater.from(context).inflate(R.layout.bottomsheet, parent, false);
